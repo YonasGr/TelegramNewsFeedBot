@@ -1,10 +1,10 @@
-# Stable working versions (tested with Python 3.10)
-aiohttp==3.9.3  # Newer stable version
-aiogram==3.0.0b7
+# Pinned versions that work together
+aiogram==3.0.0b7  # Core Telegram bot library
+aiohttp==3.8.6   # Last stable version in 3.8.x series
 beautifulsoup4==4.12.2
 feedparser==6.0.10
 python-dotenv==1.0.0
 sqlalchemy==2.0.19
 alembic==1.11.1
-pydantic~=1.10.4  # Required for aiogram
+pydantic~=1.10.4  # Required by aiogram
 redis==4.5.5
