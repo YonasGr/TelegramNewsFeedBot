@@ -1,6 +1,7 @@
 # Pinned versions that work together
 aiogram==3.0.0b7  # Core Telegram bot library
 aiohttp==3.8.6   # Last stable version in 3.8.x series
+multidict==6.0.4  # Fix for aiohttp build on Railway
 beautifulsoup4==4.12.2
 feedparser==6.0.10
 python-dotenv==1.0.0
