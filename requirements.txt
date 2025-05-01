@@ -1,9 +1,10 @@
-aiohttp==3.8.1 --only-binary :all:
+# Stable working versions (tested with Python 3.10)
+aiohttp==3.9.3  # Newer stable version
 aiogram==3.0.0b7
 beautifulsoup4==4.12.2
 feedparser==6.0.10
 python-dotenv==1.0.0
 sqlalchemy==2.0.19
 alembic==1.11.1
-pydantic~=1.10.4  # Required for aiogram compatibility
+pydantic~=1.10.4  # Required for aiogram
 redis==4.5.5
