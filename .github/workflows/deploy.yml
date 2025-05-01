@@ -1,4 +1,4 @@
-name: Deploy to Railway
+name: Deploy Telegram Bot to Railway
 
 on:
   push:
@@ -20,6 +20,14 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -52,3 +60,7 @@ jobs:
           ADMIN_IDS: ${{ secrets.ADMIN_IDS }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
+          
+      - name: Verify deployment
+        run: railway status --service ${{ secrets.RAILWAY_SERVICE_NAME }}
+        timeout-minutes: 5
