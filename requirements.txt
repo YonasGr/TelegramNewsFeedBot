@@ -5,7 +5,7 @@ feedparser==6.0.10
 python-dotenv==1.0.0
 sqlalchemy==2.0.19
 alembic==1.11.1
-pydantic==2.3.0
+pydantic~=1.10.4  # Downgraded for aiogram compatibility
 redis==4.5.5
 celery==5.3.1
 requests==2.31.0
