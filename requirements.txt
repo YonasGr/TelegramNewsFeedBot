@@ -1,5 +1,5 @@
 # Use pre-compiled wheels where possible
-aiohttp==3.8.4 --only-binary :all:
+httpx==0.27.0
 aiogram==3.0.0b7
 beautifulsoup4==4.12.2
 feedparser==6.0.10
