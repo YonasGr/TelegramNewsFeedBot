@@ -73,6 +73,106 @@ A powerful and feature-rich Telegram bot that aggregates content from various so
    python main.py
    ```
 
+## 🐳 Docker Installation (Recommended)
+
+Docker provides an isolated environment and simplified deployment. Choose one of the following methods:
+
+### Option 1: Quick Start with Docker Compose
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YonasGr/TelegramNewsFeedBot.git
+   cd TelegramNewsFeedBot
+   ```
+
+2. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your bot token and admin IDs
+   ```
+
+3. **Start with Docker Compose**
+   ```bash
+   # Production setup (SQLite + Redis)
+   docker-compose up -d
+   
+   # Development setup (PostgreSQL + Redis + Management tools)
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+### Option 2: Docker Build and Run
+
+1. **Build the Docker image**
+   ```bash
+   docker build -t telegram-news-bot .
+   ```
+
+2. **Create required directories**
+   ```bash
+   mkdir -p data logs media_cache
+   ```
+
+3. **Run the container**
+   ```bash
+   docker run -d \
+     --name telegram-news-bot \
+     --env-file .env \
+     -v $(pwd)/data:/app/data \
+     -v $(pwd)/logs:/app/logs \
+     -v $(pwd)/media_cache:/app/media_cache \
+     telegram-news-bot
+   ```
+
+### Docker Environment Variables
+
+All environment variables from the `.env.example` file are supported. Key variables for Docker:
+
+```env
+# Required
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+ADMIN_IDS=123456789,987654321
+
+# Database (Docker Compose handles this)
+DATABASE_URL=sqlite:///data/database.db
+
+# Redis (Docker Compose handles this)
+REDIS_URL=redis://redis:6379/0
+```
+
+### Managing the Docker Deployment
+
+```bash
+# View logs
+docker-compose logs -f telegram-bot
+
+# Stop services
+docker-compose down
+
+# Update and restart
+docker-compose pull
+docker-compose up -d --build
+
+# Access container shell
+docker-compose exec telegram-bot bash
+```
+
+### Development with Docker
+
+The `docker-compose.dev.yml` includes additional services:
+
+- **PostgreSQL**: Database server
+- **pgAdmin**: Database management (http://localhost:8080)
+- **Redis Commander**: Redis management (http://localhost:8081)
+
+```bash
+# Start development environment
+docker-compose -f docker-compose.dev.yml up -d
+
+# Access management interfaces
+# pgAdmin: http://localhost:8080 (admin@newsbot.dev / admin)
+# Redis Commander: http://localhost:8081
+```
+
 ## ⚙️ Configuration
 
 ### Environment Variables

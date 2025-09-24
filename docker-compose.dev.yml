@@ -1,0 +1,105 @@
+version: '3.8'
+
+# Development environment with additional services and tools
+services:
+  # Main Telegram Bot Service (Development Mode)
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram-news-bot-dev
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - DATABASE_URL=postgresql://newsbot:newsbot_dev@postgres:5432/newsbot_dev
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=DEBUG
+      - LOG_DIR=logs
+      - MEDIA_CACHE_DIR=media_cache
+      - SCHEDULER_INTERVAL=${SCHEDULER_INTERVAL:-60}  # More frequent updates for dev
+      - MAX_ITEMS_PER_UPDATE=${MAX_ITEMS_PER_UPDATE:-3}
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-30}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+      - RETRY_DELAY=${RETRY_DELAY:-5}
+      - USER_AGENT=${USER_AGENT:-Mozilla/5.0 FeedAggregatorBot/1.0-dev}
+    volumes:
+      - .:/app  # Mount source code for development
+      - ./logs:/app/logs
+      - ./media_cache:/app/media_cache
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - telegram-bot-network
+    # Override command for development (optional)
+    # command: ["python", "-u", "main.py"]
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-bot-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - telegram-bot-network
+
+  # PostgreSQL Service for Development
+  postgres:
+    image: postgres:15-alpine
+    container_name: telegram-bot-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: newsbot_dev
+      POSTGRES_USER: newsbot
+      POSTGRES_PASSWORD: newsbot_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - telegram-bot-network
+
+  # pgAdmin for Database Management (Development)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: telegram-bot-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@newsbot.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - telegram-bot-network
+
+  # Redis Commander for Redis Management (Development)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: telegram-bot-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - telegram-bot-network
+
+volumes:
+  redis_data:
+  postgres_data:
+  pgadmin_data:
+
+networks:
+  telegram-bot-network:
+    driver: bridge
