@@ -1,0 +1,67 @@
+services:
+  # Main Telegram Bot Service
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram-news-bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - DATABASE_URL=sqlite:///data/database.db
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_DIR=logs
+      - MEDIA_CACHE_DIR=media_cache
+      - SCHEDULER_INTERVAL=${SCHEDULER_INTERVAL:-300}
+      - MAX_ITEMS_PER_UPDATE=${MAX_ITEMS_PER_UPDATE:-5}
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-30}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+      - RETRY_DELAY=${RETRY_DELAY:-5}
+      - USER_AGENT=${USER_AGENT:-Mozilla/5.0 FeedAggregatorBot/1.0}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./media_cache:/app/media_cache
+    depends_on:
+      - redis
+    networks:
+      - telegram-bot-network
+
+  # Redis Service for FSM Storage
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-bot-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - telegram-bot-network
+
+  # Optional PostgreSQL Service
+  # Uncomment if you prefer PostgreSQL over SQLite
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: telegram-bot-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: newsbot
+  #     POSTGRES_USER: newsbot
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - telegram-bot-network
+
+volumes:
+  redis_data:
+  # postgres_data:  # Uncomment if using PostgreSQL
+
+networks:
+  telegram-bot-network:
+    driver: bridge
