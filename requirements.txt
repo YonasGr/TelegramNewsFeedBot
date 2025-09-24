@@ -1,11 +1,53 @@
-# Pinned versions that work together
-aiogram==3.0.0b7  # Core Telegram bot library
-aiohttp==3.8.6   # Last stable version in 3.8.x series
-multidict==6.0.4  # Fix for aiohttp build on Railway
+# Core Telegram bot framework
+aiogram==3.0.0b7
+
+# HTTP client for async requests
+aiohttp==3.8.6
+
+# Required for aiohttp on some platforms
+multidict==6.0.4
+
+# HTML parsing and content extraction
 beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# RSS/Atom feed parsing
 feedparser==6.0.10
+
+# Environment variable management
 python-dotenv==1.0.0
+
+# Database ORM and migrations
 sqlalchemy==2.0.19
 alembic==1.11.1
-pydantic~=1.10.4  # Required by aiogram
+
+# Data validation and serialization
+pydantic~=1.10.4
+
+# Redis support for FSM storage
 redis==4.5.5
+
+# Additional dependencies for enhanced functionality
+# URL parsing and validation
+urllib3==2.0.4
+
+# Date and time handling
+python-dateutil==2.8.2
+
+# Async utilities
+asyncio-mqtt==0.11.1
+
+# Testing dependencies (optional, for development)
+pytest==7.4.0
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Development tools (optional)
+black==23.7.0
+isort==5.12.0
+flake8==6.0.0
+mypy==1.5.1
+
+# Production server dependencies (optional)
+gunicorn==21.2.0
+uvloop==0.17.0
