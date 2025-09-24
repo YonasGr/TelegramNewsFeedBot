@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Development environment with additional services and tools
 services:
   # Main Telegram Bot Service (Development Mode)
