@@ -87,17 +87,20 @@ Docker provides an isolated environment and simplified deployment. Choose one of
 
 2. **Configure environment variables**
    ```bash
-   cp .env.example .env
+   cp .env.docker .env
    # Edit .env with your bot token and admin IDs
+   nano .env
    ```
 
-3. **Start with Docker Compose**
+3. **Start with Docker Compose** (choose one)
    ```bash
-   # Production setup (SQLite + Redis)
-   docker-compose up -d
+   # Using the convenience script (recommended)
+   ./docker-run.sh prod     # Production setup
+   ./docker-run.sh dev      # Development setup
    
-   # Development setup (PostgreSQL + Redis + Management tools)
-   docker-compose -f docker-compose.dev.yml up -d
+   # Or manually with docker compose
+   docker compose up -d                                    # Production
+   docker compose -f docker-compose.dev.yml up -d        # Development
    ```
 
 ### Option 2: Docker Build and Run
@@ -142,36 +145,83 @@ REDIS_URL=redis://redis:6379/0
 ### Managing the Docker Deployment
 
 ```bash
-# View logs
-docker-compose logs -f telegram-bot
+# Using the convenience script (recommended)
+./docker-run.sh status     # Check service status
+./docker-run.sh logs       # View bot logs
+./docker-run.sh stop       # Stop all services
+./docker-run.sh help       # Show all available commands
 
-# Stop services
-docker-compose down
-
-# Update and restart
-docker-compose pull
-docker-compose up -d --build
-
-# Access container shell
-docker-compose exec telegram-bot bash
+# Or manually with docker compose
+docker compose logs -f telegram-bot    # View logs
+docker compose down                     # Stop services
+docker compose pull && docker compose up -d --build  # Update and restart
+docker compose exec telegram-bot bash  # Access container shell
 ```
 
 ### Development with Docker
 
-The `docker-compose.dev.yml` includes additional services:
+The `docker-compose.dev.yml` includes additional services for development:
 
-- **PostgreSQL**: Database server
-- **pgAdmin**: Database management (http://localhost:8080)
-- **Redis Commander**: Redis management (http://localhost:8081)
+- **PostgreSQL**: Database server with sample data
+- **pgAdmin**: Database management interface
+- **Redis Commander**: Redis monitoring and management
+- **Volume Mounting**: Live code changes without rebuilds
 
 ```bash
 # Start development environment
-docker-compose -f docker-compose.dev.yml up -d
+./docker-run.sh dev
+# OR
+docker compose -f docker-compose.dev.yml up -d
 
 # Access management interfaces
 # pgAdmin: http://localhost:8080 (admin@newsbot.dev / admin)
 # Redis Commander: http://localhost:8081
+
+# View logs in real-time
+./docker-run.sh logs
 ```
+
+### Docker Environment Variables
+
+All environment variables work the same in Docker. Key differences:
+
+| Variable | Docker Default | Notes |
+|----------|----------------|-------|
+| `DATABASE_URL` | `sqlite:///data/database.db` | Uses mounted volume |
+| `REDIS_URL` | `redis://redis:6379/0` | Points to Redis container |
+| `LOG_DIR` | `logs` | Mounted volume for persistence |
+| `MEDIA_CACHE_DIR` | `media_cache` | Mounted volume for persistence |
+
+### Production Deployment
+
+For production deployments, consider:
+
+1. **Use Docker Compose with external volumes**:
+   ```bash
+   # Create named volumes for persistence
+   docker volume create telegram-bot-data
+   docker volume create telegram-bot-logs
+   
+   # Update docker-compose.yml to use named volumes
+   ```
+
+2. **Set up proper logging**:
+   ```bash
+   # View logs with rotation
+   docker compose logs --tail=100 -f telegram-bot
+   ```
+
+3. **Monitor resource usage**:
+   ```bash
+   # Check resource usage
+   docker stats telegram-news-bot
+   ```
+
+4. **Set up health monitoring**:
+   ```bash
+   # Check container health
+   docker compose ps
+   ```
 
 ## ⚙️ Configuration
 

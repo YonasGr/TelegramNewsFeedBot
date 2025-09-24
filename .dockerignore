@@ -12,6 +12,7 @@ docs/
 .env
 .env.*
 !.env.example
+!.env.docker
 
 # Python cache and compiled files
 __pycache__/
