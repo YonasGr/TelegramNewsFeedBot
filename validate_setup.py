@@ -175,8 +175,46 @@ def check_database():
         return False
 
 
+def check_redis_connectivity():
+    """Check Redis connectivity (optional but recommended)."""
+    print("\n🔴 Checking Redis connectivity...")
+    
+    try:
+        from config import config
+        import redis
+        
+        if not config.REDIS_URL:
+            print("ℹ️ Redis URL not configured - bot will use in-memory storage")
+            print("  This is acceptable for development but not recommended for production")
+            return True
+        
+        # Try to connect to Redis
+        try:
+            redis_client = redis.from_url(config.REDIS_URL, socket_connect_timeout=5)
+            redis_client.ping()
+            print(f"✅ Successfully connected to Redis at {config.REDIS_URL}")
+            print("  FSM states will persist across bot restarts")
+            redis_client.close()
+            return True
+        except (redis.ConnectionError, redis.TimeoutError) as e:
+            print(f"⚠️ Cannot connect to Redis: {e}")
+            print("  Bot will fall back to in-memory storage")
+            print("  FSM states will be lost on restart")
+            print("  This is acceptable for development but not recommended for production")
+            return True  # Redis is optional, so we return True
+        
+    except ImportError:
+        print("⚠️ Redis library not installed")
+        print("  Bot will use in-memory storage")
+        return True  # Redis is optional
+    except Exception as e:
+        print(f"⚠️ Redis check error: {e}")
+        return True  # Don't fail on Redis issues since it's optional
+
+
 def check_file_structure():
     """Check if all required files are present."""
+    #...
     print("\n📁 Checking file structure...")
     
     required_files = [
@@ -220,7 +258,8 @@ def main():
         ("File Structure", check_file_structure),
         ("Environment", check_environment),
         ("Configuration", check_configuration),
-        ("Database", check_database)
+        ("Database", check_database),
+        ("Redis Connectivity", check_redis_connectivity)
     ]
     
     passed = 0

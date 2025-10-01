@@ -41,8 +41,8 @@ A powerful and feature-rich Telegram bot that aggregates content from various so
 
 - Python 3.8 or higher
 - A Telegram Bot Token (get one from [@BotFather](https://t.me/BotFather))
-- Redis server (optional, for FSM storage)
 - SQLite or PostgreSQL database
+- Redis server (optional, recommended for production - see Configuration section)
 
 ### Installation
 
@@ -138,9 +138,17 @@ ADMIN_IDS=123456789,987654321
 # Database (Docker Compose handles this)
 DATABASE_URL=sqlite:///data/database.db
 
-# Redis (Docker Compose handles this)
+# Redis (Docker Compose handles this automatically)
+# When using docker-compose.yml, Redis is included and configured
+# The bot will automatically connect to the Redis service
 REDIS_URL=redis://redis:6379/0
+
+# For standalone Docker (without docker-compose):
+# - Comment out REDIS_URL to use in-memory storage
+# - Or point to an external Redis instance
 ```
+
+**Note**: The production docker-compose configuration includes Redis by default for optimal performance and state persistence.
 
 ### Managing the Docker Deployment
 
@@ -194,32 +202,86 @@ All environment variables work the same in Docker. Key differences:
 
 ### Production Deployment
 
-For production deployments, consider:
+For production deployments, consider the following best practices:
 
-1. **Use Docker Compose with external volumes**:
-   ```bash
-   # Create named volumes for persistence
-   docker volume create telegram-bot-data
-   docker volume create telegram-bot-logs
-   
-   # Update docker-compose.yml to use named volumes
-   ```
+#### 1. Use Docker Compose with External Volumes
+```bash
+# Create named volumes for persistence
+docker volume create telegram-bot-data
+docker volume create telegram-bot-logs
 
-2. **Set up proper logging**:
-   ```bash
-   # View logs with rotation
-   docker compose logs --tail=100 -f telegram-bot
-   ```
+# Update docker-compose.yml to use named volumes
+```
 
-3. **Monitor resource usage**:
-   ```bash
-   # Check resource usage
-   docker stats telegram-news-bot
-   ```
+#### 2. Configure Logging Properly
+```bash
+# View logs with rotation
+docker compose logs --tail=100 -f telegram-bot
 
-4. **Set up health monitoring**:
-   ```bash
-   # Check container health
+# Set appropriate LOG_LEVEL in .env
+LOG_LEVEL=INFO  # Use WARNING or ERROR for production to reduce log volume
+```
+
+#### 3. Enable Redis for State Persistence
+Redis is **highly recommended** for production to ensure:
+- FSM states persist across restarts
+- No loss of user conversation context during deployments
+- Support for horizontal scaling if needed
+
+```env
+# Production: Always use Redis
+REDIS_URL=redis://redis:6379/0
+```
+
+#### 4. Monitor Resource Usage
+```bash
+# Check resource usage
+docker stats telegram-news-bot
+
+# Monitor logs for errors
+docker compose logs -f telegram-bot | grep ERROR
+```
+
+#### 5. Set Up Health Monitoring
+```bash
+# Check container health
+docker compose ps
+
+# The bot includes a built-in health check that validates:
+# - Configuration is valid
+# - Database is accessible
+# - Bot can start successfully
+```
+
+#### 6. Security Best Practices
+- Store sensitive environment variables securely (use Docker secrets or external secret management)
+- Run the bot as a non-root user (already configured in Dockerfile)
+- Keep dependencies up to date: `docker compose pull && docker compose up -d --build`
+- Regularly backup your database and configuration
+- Use HTTPS if exposing any web interfaces
+- Limit admin access to trusted user IDs only
+
+#### 7. Backup Strategy
+```bash
+# Backup database
+docker cp telegram-news-bot:/app/data/database.db ./backups/database-$(date +%Y%m%d).db
+
+# Backup logs (optional)
+docker cp telegram-news-bot:/app/logs ./backups/logs-$(date +%Y%m%d)/
+```
+
+#### 8. Update and Restart Procedure
+```bash
+# 1. Pull latest changes
+git pull origin main
+
+# 2. Rebuild and restart
+docker compose down
+docker compose up -d --build
+
+# 3. Verify bot is running
+docker compose logs -f telegram-bot
+```
    docker compose ps
    ```
 
@@ -239,7 +301,9 @@ DATABASE_URL=sqlite:///database.db
 # Or for PostgreSQL:
 # DATABASE_URL=postgresql://user:password@localhost/newsbot
 
-# Redis Configuration (optional)
+# Redis Configuration (optional - for FSM state persistence)
+# If not configured or unreachable, the bot will use in-memory storage
+# Note: In-memory storage means FSM states (like multi-step commands) will be lost on restart
 REDIS_URL=redis://localhost:6379/0
 
 # Scraper Settings
@@ -260,6 +324,24 @@ MEDIA_CACHE_DIR=media_cache
 LOG_LEVEL=INFO
 LOG_DIR=logs
 ```
+
+### Redis Configuration Details
+
+Redis is **optional** and used for FSM (Finite State Machine) storage. The bot will:
+
+- ✅ **With Redis**: FSM states persist across bot restarts (recommended for production)
+- ⚠️ **Without Redis**: FSM states are stored in memory and lost on restart (acceptable for development/testing)
+
+**When do you need Redis?**
+- Production deployments where users may be in the middle of multi-step operations during restarts
+- Multiple bot instances sharing state (horizontal scaling)
+
+**When is in-memory storage acceptable?**
+- Development and testing environments
+- Single-user or low-traffic bots
+- Deployments where brief service interruptions are acceptable
+
+The bot automatically detects Redis availability and falls back gracefully to in-memory storage with clear logging.
 
 ### Database Setup
 
