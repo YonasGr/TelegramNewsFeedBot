@@ -41,7 +41,7 @@ A powerful and feature-rich Telegram bot that aggregates content from various so
 
 - Python 3.8 or higher
 - A Telegram Bot Token (get one from [@BotFather](https://t.me/BotFather))
-- Redis server (optional, for FSM storage)
+- Redis server (optional, for persistent FSM storage - automatically falls back to in-memory storage if unavailable)
 - SQLite or PostgreSQL database
 
 ### Installation
@@ -239,7 +239,7 @@ DATABASE_URL=sqlite:///database.db
 # Or for PostgreSQL:
 # DATABASE_URL=postgresql://user:password@localhost/newsbot
 
-# Redis Configuration (optional)
+# Redis Configuration (optional - falls back to in-memory storage if unavailable)
 REDIS_URL=redis://localhost:6379/0
 
 # Scraper Settings
@@ -454,6 +454,12 @@ This project follows PEP 8 guidelines and uses:
 1. Monitor memory usage in logs
 2. Adjust batch sizes in configuration
 3. Consider using Redis for FSM storage
+
+#### Redis Connection Issues
+1. Redis is optional - the bot will automatically fall back to in-memory storage
+2. If Redis fails to connect, check the REDIS_URL configuration
+3. Verify Redis server is running: `redis-cli ping` (should return PONG)
+4. Note: In-memory storage means FSM state will not persist between bot restarts
 
 ### Getting Help
 
