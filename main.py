@@ -8,6 +8,8 @@ including handlers, scheduler, and database connections.
 import asyncio
 import sys
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 
@@ -48,16 +50,23 @@ async def main():
             sys.exit(1)
         
         # Set up FSM storage
+        storage = None
         try:
-            # Try Redis first, fall back to memory storage
+            # Try Redis first with async connection test
             storage = RedisStorage.from_url(config.REDIS_URL)
-            logger.info("Using Redis storage for FSM")
+            # Test the connection by creating a dummy key
+            await storage.redis.ping()
+            logger.info("✓ Successfully connected to Redis for FSM storage")
         except Exception as e:
-            logger.warning(f"Redis connection failed ({e}), using memory storage")
+            logger.warning(f"Redis connection failed: {e}")
+            logger.info("Falling back to in-memory storage (data will not persist across restarts)")
             storage = MemoryStorage()
         
-        # Initialize bot and dispatcher
-        bot = Bot(token=config.BOT_TOKEN, parse_mode="HTML")
+        # Initialize bot and dispatcher with DefaultBotProperties for aiogram 3.7+
+        bot = Bot(
+            token=config.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        )
         dp = Dispatcher(storage=storage)
         
         # Set up handlers
